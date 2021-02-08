@@ -2,9 +2,9 @@ import React, { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 import * as Yup from 'yup';
 
-import api from '../../api';
-
 import getValidationErrors from '../../utils/getValidationErrors';
+import getToken from '../../services/getToken';
+import getUser from '../../services/getUser';
 
 import useForm from '../../hooks/useForm';
 
@@ -25,10 +25,10 @@ function Login() {
 
       try {
         const schema = Yup.object().shape({
-          username: Yup.string()
-            .required('E-mail obrigatório')
-            .email('Digite um e-mail válido'),
-          password: Yup.string().required('Senha obrigatória'),
+          username: Yup.string().required('E-mail obrigatório'),
+          /* .email('Digite um e-mail válido') */ password: Yup.string().required(
+            'Senha obrigatória'
+          ),
         });
 
         const data = {
@@ -40,10 +40,11 @@ function Login() {
           abortEarly: false,
         });
 
-        const response = await api('/jwt-auth/v1/token', 'POST', data);
+        const token = await getToken(data);
+        const user = await getUser(token);
 
-        // eslint-disable-next-line no-console
-        console.log(response);
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
       } catch (err) {
         if (err instanceof Yup.ValidationError) {
           setErrors(getValidationErrors(err));
